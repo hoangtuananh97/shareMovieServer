@@ -1,6 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -46,7 +47,7 @@ def get_video(video_id: UUID, db: Session = Depends(get_db)):
 
 @router.get("", response_model=schemas.ListVideoResponse)
 def list_videos(db: Session = Depends(get_db), skip: int = 0, limit: int = 10):
-    videos = db.query(models.Video).offset(skip).limit(limit).all()
+    videos = db.query(models.Video).order_by(desc(models.Video.shared_at)).offset(skip).limit(limit).all()
     return schemas.ListVideoResponse(Status=schemas.Status.Success,
                                      Videos=[schemas.VideoSchema.from_orm(video) for video in videos])
 
