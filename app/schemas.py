@@ -111,6 +111,10 @@ class VideoSchema(VideoBase):
         return f"https://{config('S3_BUCKET')}.s3.{config('AWS_REGION')}.amazonaws.com/{image_url}"
 
 
+class VideoListSchema(VideoSchema):
+    shared_by: str
+
+
 class VideoResponse(BaseModel):
     Status: Status
     Video: VideoSchema
@@ -118,4 +122,4 @@ class VideoResponse(BaseModel):
 
 class ListVideoResponse(BaseModel):
     Status: Status
-    Videos: List[VideoSchema]
+    Videos: List[VideoListSchema]

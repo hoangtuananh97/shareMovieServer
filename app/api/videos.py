@@ -47,9 +47,26 @@ def get_video(video_id: UUID, db: Session = Depends(get_db)):
 
 @router.get("", response_model=schemas.ListVideoResponse)
 def list_videos(db: Session = Depends(get_db), skip: int = 0, limit: int = 10):
-    videos = db.query(models.Video).order_by(desc(models.Video.shared_at)).offset(skip).limit(limit).all()
-    return schemas.ListVideoResponse(Status=schemas.Status.Success,
-                                     Videos=[schemas.VideoSchema.from_orm(video) for video in videos])
+    videos = (
+        db.query(models.Video)
+        .join(models.User, models.Video.shared_by == models.User.id)
+        .order_by(desc(models.Video.shared_at))
+        .offset(skip).limit(limit).all()
+    )
+    video_response = []
+    for video in videos:
+        video_response.append(schemas.VideoListSchema.from_orm({
+            "id": video.id,
+            "title": video.title,
+            "shared_by": video.user.email,
+            "video_url": video.video_url,
+            "image_url": video.image_url,
+            "tags": video.tags,
+            "likes": video.likes,
+            "dislikes": video.dislikes,
+            "shared_at": video.shared_at,
+        }))
+    return schemas.ListVideoResponse(Status=schemas.Status.Success, Videos=video_response)
 
 
 @router.patch("/{video_id}", response_model=schemas.VideoResponse)
