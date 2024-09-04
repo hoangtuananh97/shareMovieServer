@@ -92,3 +92,30 @@ Test Coverage: `90%`
 - If WebSocket connections fail, check your firewall settings and ensure the port is open.
 
 For more detailed information on the API endpoints and their usage, refer to the Swagger documentation at `/docs` when the application is running.
+
+
+## RUN Client and Server
+1. Goto folder parent
+2. Create `sh file`. Ex: `run_server.sh`
+3. Add permission for `sh file`: ` chmod +x run_server.sh`
+4. Add content to file:
+```
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Build the Docker images and start the containers
+echo "Server: Building Docker images and starting containers..."
+docker-compose -f server/docker-compose.yml up --build -d
+
+echo "Client: Building Docker images and starting containers..."
+docker-compose -f client-ytb/docker-compose.yml up --build -d
+
+# Wait for a few seconds to ensure that services are up and running
+echo "Waiting for services to start..."
+sleep 5
+
+echo "RUNNING..."
+```
+5. Run `./run_server.sh`
