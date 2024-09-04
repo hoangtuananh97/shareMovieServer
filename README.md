@@ -87,11 +87,50 @@ Test Coverage: `90%`
 
 ## Troubleshooting
 
-- If you encounter database-related issues, ensure that the `shareytb.db` file has the correct permissions.
-- For S3 upload failures, verify your AWS credentials and bucket configurations.
-- If WebSocket connections fail, check your firewall settings and ensure the port is open.
+### Database Issues
+1. If you encounter a "database is locked" error:
+   - Ensure that you don't have multiple instances of the application trying to access the database simultaneously.
+   - Check if you have proper permissions for the `shareytb.db` file.
+   - Try deleting the existing database file and restarting the application to create a new one.
 
-For more detailed information on the API endpoints and their usage, refer to the Swagger documentation at `/docs` when the application is running.
+2. If you see "SQLite objects created in a thread can only be used in that same thread" error:
+   - This is likely due to the SQLite database being accessed from multiple threads. Ensure that you're using the database connection within the same thread or use a thread-safe database engine.
+
+3. You can move using other database:
+   - MongoDB, Mysql, Postgresql,...
+
+### AWS S3 Upload Failures
+1. If you encounter S3 upload failures:
+   - Double-check your AWS credentials in the `.env` file.
+   - Ensure that your AWS IAM user has the necessary permissions to upload to the specified S3 bucket.
+   - Verify that the S3 bucket name and region are correct in your configuration.
+
+2. For "Access Denied" errors:
+   - Check the bucket policy and ensure it allows uploads from your application.
+
+### WebSocket Connection Issues
+1. If WebSocket connections fail:
+   - Ensure that your firewall or network settings are not blocking WebSocket connections.
+   - Check if the WebSocket URL is correct and matches your server configuration.
+
+2. For "Connection refused" errors:
+   - Verify that the WebSocket server is running and listening on the correct port.
+
+### Authentication Problems
+1. If you're getting "Unauthorized" errors:
+   - Ensure that you're including the JWT token in the Authorization header of your requests.
+   - Check if the token has expired. You may need to refresh the token or log in again.
+
+2. For "Invalid token" errors:
+   - Verify that the `SECRET_KEY` in your `.env` file matches the one used to generate the token.
+
+### General Troubleshooting Steps
+1. Check the application logs for detailed error messages.
+2. Ensure all required environment variables are set correctly in your `.env` file.
+3. Verify that all dependencies are installed correctly by running `pip install -r requirements.txt`.
+4. If running in Docker, try rebuilding the image with `docker-compose build` and then `docker-compose up`.
+
+5. For more detailed information on the API endpoints and their usage, refer to the Swagger documentation at `/docs` when the application is running.
 
 
 ## RUN Client and Server
@@ -107,10 +146,10 @@ set -e
 
 # Build the Docker images and start the containers
 echo "Server: Building Docker images and starting containers..."
-docker-compose -f server/docker-compose.yml up --build -d
+docker-compose -f <Folder Server>/docker-compose.yml up --build -d
 
 echo "Client: Building Docker images and starting containers..."
-docker-compose -f client-ytb/docker-compose.yml up --build -d
+docker-compose -f <Folder Client>/docker-compose.yml up --build -d
 
 # Wait for a few seconds to ensure that services are up and running
 echo "Waiting for services to start..."
