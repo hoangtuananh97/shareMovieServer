@@ -198,7 +198,7 @@ def test_create_user_empty_password(test_client):
         "password": ""
     }
     response = test_client.post("/api/users/", json=invalid_user_payload)
-    print(response.json())
+
     assert response.status_code == 422
     response_json = response.json()
 
