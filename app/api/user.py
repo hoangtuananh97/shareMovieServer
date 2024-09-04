@@ -2,13 +2,12 @@ from datetime import timedelta, datetime
 
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status, APIRouter
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import app.models as models
 import app.schemas as schemas
-from app.auth import verify_password, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_password_hash, \
+from app.auth import verify_password, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, \
     get_current_user, hash_password
 from app.database import get_db
 
@@ -20,17 +19,28 @@ router = APIRouter()
 @router.post("/login", response_model=schemas.Token)
 def login_for_access_token(form_data: schemas.UserLoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.email).first()
-    if not user or not verify_password(form_data.password, user.password):
+
+    if user and not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if not user:
+        hashed_password = hash_password(form_data.password)
+        user_data = form_data.model_dump(exclude={'password'})
+        user_data['password'] = hashed_password
+
+        new_user = models.User(**user_data)
+        db.add(new_user)
+        db.commit()
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data={"sub": form_data.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "email": user.email, "token_type": "bearer"}
+    return {"access_token": access_token, "email": form_data.email, "token_type": "bearer"}
 
 
 # Update the create_user function to use get_password_hash

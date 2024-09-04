@@ -211,3 +211,22 @@ def test_create_user_empty_password(test_client):
             'input': '', 'ctx': {'min_length': 8}
         }
     ]
+
+
+def test_create_user_invalid_payload(test_client):
+    # Attempt to create a user with an invalid payload
+    invalid_payload = {
+        "email": "invalid-email",  # Invalid email format
+        "password": "123"  # Password too short
+    }
+    response = test_client.post("/api/users/", json=invalid_payload)
+
+    assert response.status_code == 422
+    assert "detail" in response.json()
+
+
+def test_delete_user_not_found(auth_client):
+    non_existent_user_id = "non-existent-id"
+    response = auth_client.delete(f"/api/users/{non_existent_user_id}")
+
+    assert response.status_code == 500
