@@ -33,7 +33,10 @@ async def create_video(
             "id": str(new_video.id),
         }
     }
-    await websocketsManager.broadcast(json.dumps(notification))
+    try:
+        await websocketsManager.broadcast(json.dumps(notification))
+    except Exception as e:
+        print(f"Failed to broadcast message: {e}")
     return schemas.VideoResponse(Status=schemas.Status.Success, Video=schemas.VideoSchema.from_orm(new_video))
 
 
