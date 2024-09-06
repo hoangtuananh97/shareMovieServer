@@ -28,7 +28,7 @@ def test_upload_image_png(mock_upload, auth_client, sample_image):
 
 
 @patch('app.api.uploads.upload_file_to_s3')
-def test_upload_image_jpg(mock_upload, auth_client, sample_image):
+def test_upload_image_gif(mock_upload, auth_client, sample_image):
     mock_upload.return_value = "images/test_image.gif"
     files = {"file": ("test_image.gif", sample_image, "image/gif")}
     response = auth_client.post("/api/uploads/image", files=files)
