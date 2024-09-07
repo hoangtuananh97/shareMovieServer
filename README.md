@@ -108,13 +108,52 @@ Test Coverage: `90%`
 2. For "Access Denied" errors:
    - Check the bucket policy and ensure it allows uploads from your application.
 
+3. If someone intentionally upload videos or upload images multiple times. This leads to security and data redundancy issues. So we have some solution
+   1. Use File Hashing for Duplicate Detection
+      - **Solution**: Generate a unique hash for each uploaded file (videos or images) using a cryptographic hash function like MD5, SHA-256, etc. Before saving a file, compare its hash with the existing file hashes in your database.
+      - **How it works**:
+        1. When a user uploads a file, compute the hash of the file.
+        2. Check if the hash already exists in the database.
+        3. If the hash exists, reject the upload as a duplicate; otherwise, allow the upload and store the hash.
+      - **Pros**: Prevents data duplication and reduces storage usage.
+      - **Cons**: Hashing large files may slightly increase processing time, but it's effective for duplicate detection.
+   2. Set Upload Limits for Users
+      - **Solution**: Implement a rate-limiting system that restricts the number of uploads a user can perform within a specific time period (e.g., no more than 5 uploads per hour).
+      - **How it works**:
+        1. Track the number of uploads per user within a certain time window (using Redis or a database).
+        2. If a user exceeds the limit, block further uploads until the time window resets.
+      - **Pros**: Prevents spam uploads and reduces the risk of malicious behavior.
+      - **Cons**: Might frustrate users who need to upload multiple legitimate files in a short period
+   3. Validate File Type and Size
+      - **Solution**: Implement strict file type and size validation to prevent malicious uploads (e.g., someone uploading a large file multiple times to exhaust resources).
+      - **How it works**:
+        1. Before processing the upload, check the MIME type and ensure it matches the allowed types (e.g., images or videos).
+        2. Set a maximum file size limit (e.g., no more than 50 MB for images, 500 MB for videos).
+      - **Pros**: Improves security by restricting uploads to valid file types and sizes.
+      - **Cons**: Might require manual updating of allowed types or sizes depending on the application’s use case.
+   4. Implement User Reputation or Trust System
+      - **Solution**: Use a reputation system to track user behavior and determine if they frequently upload duplicates or spam content.
+      - **How it works**:
+        1. Track user activities (e.g., number of uploads, duplicate uploads, etc.).
+        2. If a user repeatedly uploads duplicates, flag their account and reduce their upload privileges (e.g., limit their daily upload quota).
+      - **Pros**: Allows good users to upload freely while restricting users with suspicious behavior.
+      - **Cons**: Requires monitoring and scoring algorithms.
+
+**Additional Security Measures**:
+- **CAPTCHA for Uploads**: Implement CAPTCHA to prevent automated bots from spamming your upload endpoints.
+- **IP Rate Limiting**: Set IP-based rate limits to prevent mass uploads from a single IP address.
+- **Audit Logs**: Keep an audit log of uploads to track suspicious behavior and identify malicious users.
+      - 
 ### WebSocket Connection Issues
 1. If WebSocket connections fail:
    - Ensure that your firewall or network settings are not blocking WebSocket connections.
-   - Check if the WebSocket URL is correct and matches your server configuration.
+   - Check if the WebSocket URL is correct and matches your server configuration. use `wss://` instead of `ws://`
 
 2. For "Connection refused" errors:
-   - Verify that the WebSocket server is running and listening on the correct port.
+   - Verify that the WebSocket server is running and listening on the correct port and firewall settings.
+
+3. Lack of Message Acknowledgment and Handling of Failures
+   - For critical messages, implement an acknowledgment mechanism. The server should send a confirmation that it received a message, and if the client doesn’t receive it within a timeout period, the message should be resent.
 
 ### Authentication Problems
 1. If you're getting "Unauthorized" errors:
@@ -123,6 +162,51 @@ Test Coverage: `90%`
 
 2. For "Invalid token" errors:
    - Verify that the `SECRET_KEY` in your `.env` file matches the one used to generate the token.
+3. For **Authentication** websocket. Some solution
+   1. Use wss:// for Secure WebSocket Connections
+   - **Solution**: Always use `wss://` (WebSocket Secure) instead of ws:// to encrypt WebSocket traffic using SSL/TLS.
+   - How it works:
+     - `wss://` encrypts the communication between the client and the server, ensuring that no one can intercept or tamper with the messages being exchanged.
+   - **Pros**: Protects against `man-in-the-middle` (MITM) attacks, ensures confidentiality, and prevents eavesdropping.
+   - **Implementation**:
+     - Obtain an SSL certificate for your domain and configure your WebSocket server to use TLS.
+     - If using NGINX or Apache as `a reverse proxy`, ensure WebSocket traffic is properly proxied with SSL termination.
+     
+   2. Authenticate WebSocket Connections
+   - **Solution**: Implement authentication before establishing WebSocket connections to ensure only authorized users can access the WebSocket service.
+   - **How it works**:
+     - Use `JWT tokens`, `API keys`, or `OAuth tokens` to authenticate the user during the WebSocket handshake.
+     - Validate the token on the server side before allowing WebSocket communication.
+   - **Pros**: Ensures that only authenticated users can initiate WebSocket communication, preventing unauthorized access.
+   - **Implementation**:
+     - Include the `JWT token` or API key in the WebSocket connection request header or query string.
+     - Validate the token on the server side during the WebSocket handshake.
+
+   3. Use Origin and Host Header Validation
+      - **Solution**: Validate the Origin and Host headers to ensure WebSocket connections are coming from trusted sources.
+      - **How it works**:
+        - During the WebSocket handshake, check the Origin header to verify that the request is coming from a trusted domain.
+        - Reject any requests with untrusted or missing origin headers.
+      - **Pros**: Prevents `Cross-Site WebSocket Hijacking` (CSWSH) and ensures that connections are only established from legitimate clients.
+      - **Implementation**:
+        - Validate the `Origin` header during the WebSocket handshake in the server-side logic.
+
+   4. Implement Rate Limiting
+      - **Solution**: Implement rate limiting to prevent abuse or denial-of-service (DoS) attacks on the WebSocket endpoint.
+      - **How it works**:
+        - Limit the number of WebSocket connection attempts and messages sent within a specific time window from the same IP address or user.
+      - **Pros**: Protects against brute-force attacks, spamming, and resource exhaustion due to excessive WebSocket connections or messages.
+      - **Implementation**:
+        - Use a rate-limiting service like Redis or tools like Nginx or AWS API Gateway to throttle connections and messages.
+   
+   5. Encrypt WebSocket Messages
+      - **Solution**: Encrypt sensitive data within the WebSocket messages to ensure that even if the connection is intercepted, the data cannot be read.
+      - **How it works:**:
+        - Use client-side encryption (e.g., AES) to encrypt messages before sending them through the WebSocket connection.
+        - Decrypt the messages server-side after they are received.
+      - **Pros**: Adds an extra layer of security, especially if sensitive information (e.g., financial data) is being transmitted.
+      - **Implementation**:
+        - Use `symmetric encryption` (e.g., AES) or public-key encryption (RSA) to encrypt the WebSocket messages.
 
 ### General Troubleshooting Steps
 1. Check the application logs for detailed error messages.
