@@ -216,9 +216,24 @@ Test Coverage: `90%`
 
 5. For more detailed information on the API endpoints and their usage, refer to the Swagger documentation at `/docs` when the application is running.
 
+### Microservices Architecture: Updated Solutions (In this project):
+1. WebSocket Connections Fail:
+   - Ensure that your API Gateway (e.g.AWS API Gateway) or load balancer supports WebSocket traffic. Proper routing and session stickiness need to be configured.
+   - If using Kubernetes, ensure WebSocket connections are correctly routed using Ingress Controllers (e.g., NGINX) that support WebSocket upgrades.
+2. Lack of Message Acknowledgment and Handling of Failures:
+   - Implement message acknowledgment using reliable messaging systems like Kafka or RabbitMQ in microservices. Use message queues to buffer WebSocket messages in case of a failure or downtime.
+   - Use retry mechanisms at both client and server levels to resend messages in case of transmission failure.
+3. Database Issues in Microservices:
+ - "Database is locked" error:
+   - Each service should use its own isolated database following the Database-per-Service pattern. This avoids issues like database locking by eliminating shared databases between services.
+ - This project use SQLite. SQLite objects created in a thread can only be used in that same thread:
+   - Move to a production-grade database like PostgreSQL or MySQL, which handle concurrent connections and are thread-safe.
+   - Move to a more scalable database: AWS RDS, MongoDB Atlas. Use database replication and sharding
+4. AWS S3 Upload Failures in Microservices:
+   - Use S3 Event Notifications to trigger background jobs (via AWS Lambda or another service) when uploads complete.
 
-## RUN Client and Server
-1. Goto folder parent
+## RUN Client and Server same time
+1. Goto folder parent have code server and code client
 2. Create `sh file`. Ex: `run_server.sh`
 3. Add permission for `sh file`: ` chmod +x run_server.sh`
 4. Add content to file:
